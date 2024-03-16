@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import userModel from "../../../../DB/model/user.model.js";
 import bcrypt from "bcrypt";
+import { sendEmail } from "../../../services/email.js";
 export const signin = async (req,res)=>{
     try{
         const {email ,password} = req.body;
@@ -9,9 +10,18 @@ export const signin = async (req,res)=>{
             res.status(400).json({message:"error :email not exist"});
         }
         else{
-            const pass= await bcrypt.compare(password,user.password);
-            res.status(200).json({message:"store email",pass});
-
+            if(user.confirmEmail){
+                const pass= await bcrypt.compare(password,user.password);
+                if(pass){
+                // password is true create token and send to frontend
+                    const token =jwt.sign({id:user._id},process.env.LOGINTOKEN,{expiresIn:60*60*24});
+                    res.status(200).json({message:"success login",token});
+                }else{
+                    res.status(400).json({message:"error password"});
+                }
+            }else{
+                res.status(401).json({message:"error: must confirm email"});
+            }
         }
     }catch(err){
         res.status(500).json({message:"catch error :",err});
@@ -30,13 +40,42 @@ export const signup = async (req,res)=>{
             // but you need to store the object in DB after send the message confirm to email >> use ..
             const store = new userModel({userName,email,password:hashPassword}); // create a object but not store in DB
             const token = jwt.sign({id:store._id},process.env.EMAILTOKEN,{expiresIn:'1h'});
-            const link=`${req.protocol}://${req.headers.host}${process.env.BASEURL}auth/confirmEmail/${token}`; //http://localhost:3000/api/v1/auth/signup
+            const link=`${req.protocol}://${req.headers.host}${process.env.BASEURL}auth/confirmEmail/${token}`; //http://localhost:3000/api/v1/auth/confirmEmail/token
             const message=`
                 <a href="${link}">Confirm Email</a>
             `;
-            res.status(200).json({message:"signup true",token,link});
+            const info =await sendEmail(email,"confirm email",message);
+            // console.log(info);
+            if(info.accepted){
+                const saved= await store.save();
+                res.status(201).json({message:"success",saved});
+            }
+            else{
+                res.status(400).json({message:"email rejected"});
+            }
         }
     }catch(err){
         res.status(500).json({message:"catch error",err});
     }
+}
+
+export const confirmEmail = async(req,res)=>{
+    try{
+        const {token}=req.params;
+        const decoded = jwt.verify(token,process.env.EMAILTOKEN);
+        if(decoded.id){
+            const user= await userModel.findByIdAndUpdate({_id:decoded.id,confirmEmail:false},{confirmEmail:true});
+            if(user){
+                res.status(201).json({message:"success confirmEmail"});
+            }
+            else{
+                res.status(201).json({message:"error confirmEmail"});
+            }
+        }else{
+            res.status(400).json({message:"error token"});
+        }
+    }catch(err){
+        res.status(500).json({message:"catch error",err})
+    }
+
 }
