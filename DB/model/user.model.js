@@ -15,6 +15,10 @@ const userSchema = new Schema({
         type:String,
         require:[true,'password is require']
     },
+    cPassword:{
+        type:String,
+        require:true
+    },
     phone:{
         type:String
     },

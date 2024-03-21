@@ -2,30 +2,35 @@ import jwt from "jsonwebtoken";
 import userModel from "../../../../DB/model/user.model.js";
 import bcrypt from "bcrypt";
 import { sendEmail } from "../../../services/email.js";
-export const signin = async (req,res)=>{
-    try{
+export const signin = async (req,res,next)=>{
+    //try{
         const {email ,password} = req.body;
         const user = await userModel.findOne({email});
         if(!user){
-            res.status(400).json({message:"error :email not exist"});
+            return next(new Error("email not exist",{cause:400}));
+            // res.status(400).json({message:"error :email not exist"});
         }
         else{
             if(user.confirmEmail){
-                const pass= await bcrypt.compare(password,user.password);
-                if(pass){
-                // password is true create token and send to frontend
-                    const token =jwt.sign({id:user._id},process.env.LOGINTOKEN,{expiresIn:60*60*24});
-                    res.status(200).json({message:"success login",token});
+                if(user.blocked){
+                    res.status(400).json({message:"blocked acount"});
                 }else{
-                    res.status(400).json({message:"error password"});
+                    const pass= await bcrypt.compare(password,user.password);
+                    if(pass){
+                         // password is true create token and send to frontend
+                        const token =jwt.sign({id:user._id},process.env.LOGINTOKEN,{expiresIn:60*60*24});
+                        res.status(200).json({message:"success login",token});
+                    }else{
+                        res.status(400).json({message:"error password"});
+                   }
                 }
             }else{
                 res.status(401).json({message:"error: must confirm email"});
             }
         }
-    }catch(err){
-        res.status(500).json({message:"catch error :",err});
-    }
+    // }catch(err){
+    //     res.status(500).json({message:"catch error :",err});
+    // }
 }
 
 export const signup = async (req,res)=>{
@@ -66,10 +71,11 @@ export const confirmEmail = async(req,res)=>{
         if(decoded.id){
             const user= await userModel.findByIdAndUpdate({_id:decoded.id,confirmEmail:false},{confirmEmail:true});
             if(user){
-                res.status(201).json({message:"success confirmEmail"});
+                res.status(200).redirect(process.env.FEURL);
+                // res.status(201).json({message:"success confirmEmail"});
             }
             else{
-                res.status(201).json({message:"error confirmEmail"});
+                res.status(401).json({message:"error confirmEmail"});
             }
         }else{
             res.status(400).json({message:"error token"});
@@ -78,4 +84,7 @@ export const confirmEmail = async(req,res)=>{
         res.status(500).json({message:"catch error",err})
     }
 
+}
+export const successConfirmEmail = async(req,res)=>{
+    res.status(200).json({message:"the email is confirmed"});
 }

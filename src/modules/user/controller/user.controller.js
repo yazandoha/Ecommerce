@@ -1,3 +1,5 @@
-export const function1=(req,res)=>{
-    res.json({message:"sccess user"});
+export const profile=(req,res)=>{
+
+        res.json({message:"sccess user"});
+
 }
