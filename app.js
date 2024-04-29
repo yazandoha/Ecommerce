@@ -10,7 +10,7 @@ dotenv.config({path:'./config/.env'});
 const port = process.env.PORT;
 const app = express();
 app.use(express.json());
-if(process.env.MOOD=='DEV'){
+if(process.env.MOOD=='DEV'){ // review :this morgan to help development to know details for requist
     app.use(morgan('dev'));
 }
 connectDB();
@@ -18,6 +18,7 @@ const baseUrl = process.env.BASEURL;
 app.use(`${baseUrl}auth`,indexRouter.authRouter);
 app.use(`${baseUrl}user`,indexRouter.userRouter);
 app.use(`${baseUrl}category`,indexRouter.categoryRouter);
+app.use(`${baseUrl}sub-category`,indexRouter.subcategoryRouter);
 app.use('*',(req,res)=>{
     res.json({message:"page not found"});
 });

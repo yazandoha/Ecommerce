@@ -3,7 +3,7 @@ import userModel from "../../../../DB/model/user.model.js";
 import bcrypt from "bcrypt";
 import { sendEmail } from "../../../services/email.js";
 export const signin = async (req,res,next)=>{
-    //try{
+    try{
         const {email ,password} = req.body;
         const user = await userModel.findOne({email});
         if(!user){
@@ -28,9 +28,9 @@ export const signin = async (req,res,next)=>{
                 res.status(401).json({message:"error: must confirm email"});
             }
         }
-    // }catch(err){
-    //     res.status(500).json({message:"catch error :",err});
-    // }
+    }catch(err){
+        res.status(500).json({message:"catch error :",err});
+    }
 }
 
 export const signup = async (req,res)=>{

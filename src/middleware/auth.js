@@ -25,9 +25,10 @@ export const auth =(accessRole=[])=>{
 
                             if(!accessRole.includes(user.role)){
                                 res.status(401).json({message:"not auth user"});
+                            }else{
+                                req.user=user;
+                                next();
                             }
-                            req.user=user;
-                            next();
                         }
                     }else{
                         res.status(401).json({message:"fail  user"});
