@@ -1,5 +1,5 @@
 import { Schema, Types, model } from "mongoose";
-const categorySchema = new Schema({
+const brandSchema = new Schema({
     name:{
         type:String,
         required:[true,'name is require'],
@@ -14,17 +14,9 @@ const categorySchema = new Schema({
         required:true
     },
     slug:String,
-    ImagePublicId:String   
-},{
-    timestamps:true,
-    toJSON:{virtuals:true},
-    toObject:{virtuals:true}
-})
+    ImagePublicId:String,
 
-categorySchema.virtual("subCategory",{
-    ref:'subcategory',
-    localField:'_id',
-    foreignField:'categoryId',
-})
-const categoryModel = model('category',categorySchema);
-export default categoryModel;
+},{timestamps:true})
+
+const brandModel = model('brand',brandSchema);
+export default brandModel;

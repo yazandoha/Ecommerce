@@ -30,26 +30,38 @@ export const createSubCategory = async(req,res,next)=>{
 }
 
 export const updateSubCategory = async(req,res,next)=>{
-    // in this function thear is a problem : when i send id of sub category error then the image will store in the cloudinary
+    // in this function thear is a problem : when i send error id of sub category then the image will store in the cloudinary
     const {categoryId,id}=req.params;
-    // res.status(200).json({message:"success",categoryId,id});
-    if(req.file){
-        const {secure_url,public_id} = await cloudinary.uploader.upload(req.file.path,{folder:`ecommerce/subcategory/${categoryId}`});
-        req.body.image=secure_url;
-        req.body.ImagePublicId=public_id;
-    }
-    if(req.body.name){
-        req.body.slug=slugify(req.body.name);
-    }
-    const subcategory = await subcategoryModel.findOneAndUpdate({_id:id,categoryId:categoryId},req.body,{new:false});
-
-    if(req.file){
-     await cloudinary.uploader.destroy(subcategory.ImagePublicId);   
-    }
-    if(subcategory){
-        res.status(200).json({message:"success",subcategory});
+    let publicId;
+    const category = await categoryModel.findById({_id:categoryId});
+    const sub = await subcategoryModel.findById({_id:id});
+    if(category &&sub ){
+        if(req.body.name){
+            req.body.slug=slugify(req.body.name);
+        }
+        if(req.file){
+            const {secure_url,public_id} = await cloudinary.uploader.upload(req.file.path,{folder:`ecommerce/subcategory/${categoryId}`});
+            publicId=public_id;
+            req.body.image=secure_url;
+            req.body.ImagePublicId=public_id;
+            // if(secure_url&&public_id){
+            //     await cloudinary.uploader.destroy(sub.ImagePublicId);
+            // }
+        }
+        const subcategory = await subcategoryModel.findOneAndUpdate({_id:id,categoryId:categoryId},req.body,{new:false});
+        if(subcategory){
+            if(req.file){
+                await cloudinary.uploader.destroy(subcategory.ImagePublicId);   
+            }
+            res.status(200).json({message:"success",subcategory});
+        }else{
+            if(req.file){
+                await cloudinary.uploader.destroy(publicId);   
+            }
+            res.status(400).json({message:"fail update subcategory"});
+        }
     }else{
-        res.status(400).json({message:"fail update subcategory"})
+        res.status(400).json({message:"error:some of id's of category and subcategory is incorrect"});
     }
 }
 

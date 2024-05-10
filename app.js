@@ -19,6 +19,8 @@ app.use(`${baseUrl}auth`,indexRouter.authRouter);
 app.use(`${baseUrl}user`,indexRouter.userRouter);
 app.use(`${baseUrl}category`,indexRouter.categoryRouter);
 app.use(`${baseUrl}sub-category`,indexRouter.subcategoryRouter);
+app.use(`${baseUrl}brand`,indexRouter.brandRouter);
+app.use(`${baseUrl}product`,indexRouter.productRouter);
 app.use('*',(req,res)=>{
     res.json({message:"page not found"});
 });
